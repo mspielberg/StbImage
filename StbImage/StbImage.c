@@ -4,24 +4,24 @@
 #include "stb_image_resize.h"
 #include "StbImage.h"
 
-int GetImageInfo(char const* filename, int* x, int* y, int* comp)
+int GetImageInfo(char const* filename, int* width, int* height, int* numComponents)
 {
-  return stbi_info(filename, x, y, comp);
+  return stbi_info(filename, width, height, numComponents);
 }
 
-void GetRGBABlock(stbi_uc* img, int img_width, int img_height, unsigned char* dest, int blockX, int blockY)
+void GetRGBABlock(stbi_uc* img, int imgWidth, int imgHeight, unsigned char* dest, int blockX, int blockY)
 {
   size_t pixelX = (size_t)blockX * 4;
   size_t pixelY = (size_t)blockY * 4;
-  size_t stride = (size_t)img_width * 4;
-  size_t row_size_bytes = pixelX + 4 <= img_width ? 16 : (img_width - pixelX) * 4;
-  size_t rows_to_copy = pixelY + 4 <= img_height ? 4 : img_height - pixelY;
+  size_t stride = (size_t)imgWidth * 4;
+  size_t rowSize = pixelX + 4 <= imgWidth ? 16 : (imgWidth - pixelX) * 4;
+  size_t rowCount = pixelY + 4 <= imgHeight ? 4 : imgHeight - pixelY;
 
-  if (row_size_bytes < 16 || rows_to_copy < 4)
+  if (rowSize < 16 || rowCount < 4)
     memset(dest, 0, 64);
 
-  for (size_t i = 0; i < rows_to_copy; i++)
-    memcpy_s(dest + i * 16, 16, img + stride * (pixelY + i) + pixelX * 4, row_size_bytes);
+  for (size_t i = 0; i < rowCount; i++)
+    memcpy_s(dest + i * 16, 16, img + stride * (pixelY + i) + pixelX * 4, rowSize);
 }
 
 void CompressToBCx(stbi_uc* img, int imgWidth, int imgHeight, int useAlpha, unsigned char* dest)
