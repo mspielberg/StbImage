@@ -14,9 +14,12 @@ void GetRGBABlock(stbi_uc* img, int img_width, int img_height, unsigned char* de
   size_t pixelX = (size_t)blockX * 4;
   size_t pixelY = (size_t)blockY * 4;
   size_t stride = (size_t)img_width * 4;
-  size_t row_size_bytes = pixelX + 4 < img_width ? 16 : (img_width - pixelX) * 4;
-  size_t rows_to_copy = pixelY + 4 < img_height ? 4 : img_height - pixelY;
-  memset(dest, 0, 64);
+  size_t row_size_bytes = pixelX + 4 <= img_width ? 16 : (img_width - pixelX) * 4;
+  size_t rows_to_copy = pixelY + 4 <= img_height ? 4 : img_height - pixelY;
+
+  if (row_size_bytes < 16 || rows_to_copy < 4)
+    memset(dest, 0, 64);
+
   for (size_t i = 0; i < rows_to_copy; i++)
     memcpy_s(dest + i * 16, 16, img + stride * (pixelY + i) + pixelX * 4, row_size_bytes);
 }
@@ -38,7 +41,9 @@ void CompressToBCx(stbi_uc* img, int imgWidth, int imgHeight, int useAlpha, unsi
   }
 }
 
-int CompressMipmapFullScale(stbi_uc* img, int imgWidth, int imgHeight, int useAlpha, unsigned char* scaleBuf, unsigned char* dest, int destSize, int mipmapLevel)
+int CompressMipmapFullScale(
+  stbi_uc* img, int imgWidth, int imgHeight, int useAlpha,
+  unsigned char* scaleBuf, unsigned char* dest, int destSize, int mipmapLevel)
 {
   int mipmapWidth = imgWidth >> mipmapLevel;
   int mipmapHeight = imgHeight >> mipmapLevel;
@@ -65,7 +70,9 @@ int CompressMipmapFullScale(stbi_uc* img, int imgWidth, int imgHeight, int useAl
   return mipmapCompressedSize;
 }
 
-int CompressMipmapRepeated(stbi_uc* img, int imgWidth, int imgHeight, int useAlpha, unsigned char* scaleBuf, unsigned char* dest, int destSize, int mipmapLevel)
+int CompressMipmapRepeated(
+  stbi_uc* img, int imgWidth, int imgHeight, int useAlpha,
+  unsigned char* scaleBuf, unsigned char* dest, int destSize, int mipmapLevel)
 {
   int sourceMipmapLevel = mipmapLevel - 1;
   int sourceWidth = imgWidth >> sourceMipmapLevel;
@@ -101,8 +108,8 @@ int CompressMipmapRepeated(stbi_uc* img, int imgWidth, int imgHeight, int useAlp
 
 int ReadImageAsBCx(char const* filename, int flipVertically, int useAlpha, unsigned char* dest, int destSize)
 {
-  stbi_set_flip_vertically_on_load(flipVertically);
   int imgWidth, imgHeight, channels_in_file;
+  stbi_set_flip_vertically_on_load(flipVertically);
   stbi_uc* img = stbi_load(filename, &imgWidth, &imgHeight, &channels_in_file, 4);
   if (!img)
     return 0;
@@ -127,9 +134,10 @@ int ReadImageAsBCx(char const* filename, int flipVertically, int useAlpha, unsig
   return 1;
 }
 
-int ReadImageAsRGBA(char const* filename, unsigned char* dest, int destSize)
+int ReadImageAsRGBA(char const* filename, int flipVertically, unsigned char* dest, int destSize)
 {
   int imgWidth, imgHeight, channels_in_file;
+  stbi_set_flip_vertically_on_load(flipVertically);
   stbi_uc* img = stbi_load(filename, &imgWidth, &imgHeight, &channels_in_file, 4);
   if (!img)
     return 0;
