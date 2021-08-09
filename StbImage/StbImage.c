@@ -32,7 +32,7 @@ void CompressToBCx(stbi_uc* img, int imgWidth, int imgHeight, int useAlpha, unsi
     for (int blockX = 0; blockX < blockWidth; blockX++)
     {
       GetRGBABlock(img, imgWidth, imgHeight, rgbaBlock, blockX, blockY);
-      int offset = ((blockWidth * blockY) + blockX) * 16;
+      int offset = ((blockWidth * blockY) + blockX) * (useAlpha ? 16 : 8);
       stb_compress_dxt_block(dest + offset, rgbaBlock, useAlpha, STB_DXT_HIGHQUAL);
     }
   }
@@ -99,7 +99,7 @@ int CompressMipmapRepeated(stbi_uc* img, int imgWidth, int imgHeight, int useAlp
   return mipmapCompressedSize;
 }
 
-int ReadImageAsBC1(char const* filename, int flipVertically, unsigned char* dest, int destSize)
+int ReadImageAsBCx(char const* filename, int flipVertically, int useAlpha, unsigned char* dest, int destSize)
 {
   stbi_set_flip_vertically_on_load(flipVertically);
   int imgWidth, imgHeight, channels_in_file;
@@ -114,35 +114,7 @@ int ReadImageAsBC1(char const* filename, int flipVertically, unsigned char* dest
   int mipmapLevel = 0;
   do
   {
-    bytesWritten = CompressMipmapRepeated(img, imgWidth, imgHeight, 0, scaleBuf, dest, destSize, mipmapLevel);
-    dest += bytesWritten;
-    destSize -= bytesWritten;
-    mipmapLevel++;
-  }
-  while (bytesWritten > 0);
-
-  free(scaleBuf);
-  stbi_image_free(img);
-
-  return 1;
-}
-
-int ReadImageAsBC3(char const* filename, int flipVertically, unsigned char* dest, int destSize)
-{
-  stbi_set_flip_vertically_on_load(flipVertically);
-  int imgWidth, imgHeight, channels_in_file;
-  stbi_uc* img = stbi_load(filename, &imgWidth, &imgHeight, &channels_in_file, 4);
-  if (!img)
-    return 0;
-
-  stbi_uc* scaleBuf =
-    (stbi_uc*)malloc((size_t)imgWidth * (size_t)imgHeight / 2 /* 50% width */ / 2 /* 50% height */ * 4 /* channels */);
-
-  int bytesWritten = 0;
-  int mipmapLevel = 0;
-  do
-  {
-    bytesWritten = CompressMipmapRepeated(img, imgWidth, imgHeight, 1, scaleBuf, dest, destSize, mipmapLevel);
+    bytesWritten = CompressMipmapRepeated(img, imgWidth, imgHeight, useAlpha, scaleBuf, dest, destSize, mipmapLevel);
     dest += bytesWritten;
     destSize -= bytesWritten;
     mipmapLevel++;
