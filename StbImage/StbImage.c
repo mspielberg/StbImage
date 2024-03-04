@@ -9,7 +9,7 @@ int GetImageInfo(char const* filename, int* width, int* height, int* numComponen
   return stbi_info(filename, width, height, numComponents);
 }
 
-void GetBytesPerCompressedBlock(int format)
+size_t GetBytesPerCompressedBlock(int format)
 {
   switch (format)
   {
@@ -18,6 +18,8 @@ void GetBytesPerCompressedBlock(int format)
     case STBIMAGE_FORMAT_BC3:
     case STBIMAGE_FORMAT_BC5:
       return 16;
+    default:
+      return 0;
   }
 }
 
@@ -133,9 +135,9 @@ void CompressToBCx(stbi_uc* img, int imgWidth, int imgHeight, int format, unsign
   }
 }
 
-int CompressMipmapFullScale(
+size_t CompressMipmapFullScale(
   stbi_uc* img, int imgWidth, int imgHeight, int format,
-  unsigned char* scaleBuf, unsigned char* dest, int destSize, int mipmapLevel)
+  unsigned char* scaleBuf, unsigned char* dest, size_t destSize, int mipmapLevel)
 {
   int mipmapWidth = imgWidth >> mipmapLevel;
   int mipmapHeight = imgHeight >> mipmapLevel;
@@ -144,7 +146,7 @@ int CompressMipmapFullScale(
 
   int mipmapBlockWidth = (mipmapWidth + 3) / 4;
   int mipmapBlockHeight = (mipmapHeight + 3) / 4;
-  int mipmapCompressedSize = mipmapBlockHeight * mipmapBlockWidth * GetBytesPerCompressedBlock(format);
+  size_t mipmapCompressedSize = mipmapBlockHeight * mipmapBlockWidth * GetBytesPerCompressedBlock(format);
   if (mipmapCompressedSize > destSize)
     return 0;
 
@@ -162,9 +164,9 @@ int CompressMipmapFullScale(
   return mipmapCompressedSize;
 }
 
-int CompressMipmapRepeated(
+size_t CompressMipmapRepeated(
   stbi_uc* img, int imgWidth, int imgHeight, int format,
-  unsigned char* scaleBuf, unsigned char* dest, int destSize, int mipmapLevel)
+  unsigned char* scaleBuf, unsigned char* dest, size_t destSize, int mipmapLevel)
 {
   int sourceMipmapLevel = mipmapLevel - 1;
   int sourceWidth = imgWidth >> sourceMipmapLevel;
@@ -176,7 +178,7 @@ int CompressMipmapRepeated(
 
   int mipmapBlockWidth = (mipmapWidth + 3) / 4;
   int mipmapBlockHeight = (mipmapHeight + 3) / 4;
-  int mipmapCompressedSize = mipmapBlockHeight * mipmapBlockWidth * GetBytesPerCompressedBlock(format);
+  size_t mipmapCompressedSize = mipmapBlockHeight * mipmapBlockWidth * GetBytesPerCompressedBlock(format);
   if (mipmapCompressedSize > destSize)
     return 0;
 
@@ -199,7 +201,7 @@ int CompressMipmapRepeated(
   return mipmapCompressedSize;
 }
 
-int ReadImageAsBCx(char const* filename, int flipVertically, int format, unsigned char* dest, int destSize)
+int ReadImageAsBCx(char const* filename, int flipVertically, int format, unsigned char* dest, size_t destSize)
 {
   switch (format)
   {
@@ -225,7 +227,7 @@ int ReadImageAsBCx(char const* filename, int flipVertically, int format, unsigne
     return 0;
   }
 
-  int bytesWritten = 0;
+  size_t bytesWritten = 0;
   int mipmapLevel = 0;
   do
   {
@@ -242,7 +244,7 @@ int ReadImageAsBCx(char const* filename, int flipVertically, int format, unsigne
   return 1;
 }
 
-int ReadImageAsRGBA(char const* filename, int flipVertically, unsigned char* dest, int destSize)
+int ReadImageAsRGBA(char const* filename, int flipVertically, unsigned char* dest, size_t destSize)
 {
   int imgWidth, imgHeight, channels_in_file;
   stbi_set_flip_vertically_on_load(flipVertically);
@@ -250,7 +252,7 @@ int ReadImageAsRGBA(char const* filename, int flipVertically, unsigned char* des
   if (!img)
     return 0;
 
-  int imgSize = imgWidth * imgHeight * 4;
+  size_t imgSize = imgWidth * imgHeight * 4;
   memcpy_s(dest, destSize, img, imgSize);
   stbi_image_free(img);
 
