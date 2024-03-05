@@ -52,18 +52,19 @@ void GetRGBlock(stbi_uc* img, int imgWidth, int imgHeight, unsigned char* dest, 
   size_t pixelX = (size_t)blockX * 4; // left edge of block in pixel coordinates
   size_t pixelY = (size_t)blockY * 4; // top edge of block in pixel coordinates
   size_t stride = (size_t)imgWidth * 4; // bytes between rows of img
-  size_t rowSize = pixelX + 4 <= imgWidth ? 16 : (imgWidth - pixelX) * 4;
+  size_t rowLength = pixelX + 4 <= imgWidth ? 4 : imgWidth - pixelX;
   size_t rowCount = pixelY + 4 <= imgHeight ? 4 : imgHeight - pixelY;
 
-  if (rowSize < 16 || rowCount < 4)
+  if (rowLength < 4 || rowCount < 4)
     memset(dest, 0, 32);
 
   for (size_t y = 0; y < rowCount; y++)
   {
-    for (size_t x = 0; x < rowSize; x++)
+    unsigned char* rowDest = dest + 8 * y;
+    for (size_t x = 0; x < rowLength; x++)
     {
-      *dest++ = *(img + stride * (pixelY + y) + 4 * (pixelX + x)    ); // red
-      *dest++ = *(img + stride * (pixelY + y) + 4 * (pixelX + x) + 1); // green
+      *rowDest++ = *(img + stride * (pixelY + y) + 4 * (pixelX + x)    ); // red
+      *rowDest++ = *(img + stride * (pixelY + y) + 4 * (pixelX + x) + 1); // green
     }
   }
 }
